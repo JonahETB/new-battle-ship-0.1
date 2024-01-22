@@ -1,77 +1,93 @@
-"use strict"
-const sizeOfTable = 10;
-function tableGenerator () {
-    const table = document.createElement("table");
-            root.appendChild(table);
-    for (let y = 0; y < sizeOfTable; y++) {
-        const tr = document.createElement("tr");
-                table.appendChild(tr);
-        for (let x = 0; x < sizeOfTable; x++) {
-            const td = document.createElement("td");
-                    td.id = `${y}${x}`;
-                    td.setAttribute('onclick', `checkCell(${y}, ${x})`);
-                    tr.appendChild(td);
-        }
-    }
-}
-tableGenerator();
+"use strict";
 
+// Constants
+const sizeOfTable = 10;
+const root = document.getElementById("root"); // Assuming you have an element with the id "root" in your HTML
+
+// Function to generate the game table
+function tableGenerator() {
+  const table = document.createElement("table");
+  root.appendChild(table);
+
+  for (let y = 0; y < sizeOfTable; y++) {
+    const tr = table.appendChild(document.createElement("tr"));
+
+    for (let x = 0; x < sizeOfTable; x++) {
+      const td = tr.appendChild(document.createElement("td"));
+      td.id = `${y}${x}`;
+      td.addEventListener('click', () => fire(y, x));
+    }
+  }
+}
+
+// Object to manage ships
 const ships = {
     toSpawn: {
-        small: {
-            count: 3,
-            size: 2
-        },
-        med: {
-            count: 2,
-            size: 3
-        }
+        small: { count: 3, size: 2 },
+        med: { count: 2, size: 3 }
     },
     spawnedShips: []
 };
 
+// Function to check if a ship can be placed at a specific position
+function canPlaceShip(y, x) {
+    if (ships.spawnedShips.some(ship => ship.location.some(coord => coord === `[${y}-${x}]`)))
+      return false;
+  
+    for (const ship of ships.spawnedShips)
+      for (const coord of ship.location)
+        if (Math.abs(coord[0] - y) <= 1 && Math.abs(coord[1] - x) <= 1)
+          return false;
+  
+    return true;
+  }
+
+// Function to spawn ships
+function toSpawn(ship) {
+    for (let j = 0; j < ship.count; j++) {
+      let shipPlaced = false;
+  
+      while (!shipPlaced) {
+        let y = Math.floor(Math.random() * (sizeOfTable - ship.size)),
+          x = Math.floor(Math.random() * (sizeOfTable - ship.size)),
+          rotation = Math.round(Math.random());
+  
+        if (!canPlaceShip(y, x)) continue;
+  
+        const location = (rotation === 0) ?
+          Array.from({ length: ship.size }, (_, i) => `[${y}-${x + i}]`) :
+          Array.from({ length: ship.size }, (_, i) => `[${y + i}-${x}]`);
+  
+        ships.spawnedShips.push({ location, hits: Array(ship.size).fill(''), sunk: false });
+        shipPlaced = true;
+      }
+    }
+  }
+
+// Function to handle firing
+function fire(y, x) {
+    const hitShip = ships.spawnedShips.find(ship => ship.location.some(coord => coord === `[${y}-${x}]`));
+  
+    if (hitShip) {
+      console.log(`Hit at [${y}-${x}]`);
+      hitShip.hits[hitShip.location.indexOf(`[${y}-${x}]`)] = 'X';
+  
+      const td = document.getElementById(`${y}${x}`);
+      td.style.backgroundColor = 'red';
+  
+      if (hitShip.hits.every(hit => hit === 'X')) {
+        hitShip.sunk = true;
+        alert(`Ship at [${y}-${x}] sunk!`);
+      }
+    } else {
+      console.log(`Miss at [${y}-${x}]`);
+      const td = document.getElementById(`${y}${x}`);
+      td.style.backgroundColor = 'gray';
+    }
+  }
+  
+
+// Generate the game table
+tableGenerator();
 toSpawn(ships.toSpawn.med);
 toSpawn(ships.toSpawn.small);
-
-function toSpawn (ship) {
-    // we need to input the location and set the hits of the ship to 0
-    for (let j = 0; j < ship.count; j++ ) {
-        let shipPlaced = false;
-        while (!shipPlaced) {
-            let y = Math.floor(Math.random() * (sizeOfTable - ship.size));
-            let x = Math.floor(Math.random() * (sizeOfTable - ship.size));
-            let rotation = Math.round(Math.random()); // 0 - vertical, 1 - horizontal
-            // Check if the ship can be placed at the randomly chosen position
-            if (canPlaceShip(rotation, ship.size, y, x)) {
-                shipPlaced = true;
-                let data = [];
-                if (rotation == 0) {
-                    if (ship.size === 3) {
-                        data = {"location":`[${y}-${x},${y}-${x+1},${y}-${x+2}]`,"hits":['','',''],"sunk": false};
-                    } else {
-                        data = {"location":`[${y}-${x},${y}-${x+1}]`,"hits":['',''],"sunk": false};
-                    }
-                } else {
-                    if (ship.size === 3) {
-                        data = {"location":`[${y}-${x},${y+1}-${x},${y+2}-${x}]`,"hits":['','',''],"sunk": false};
-                    } else {
-                        data = {"location":`[${y}-${x},${y+1}-${x}]`,"hits":['',''],"sunk": false};
-                    }
-                }
-                ships.spawnedShips.push(data);
-            }
-        }
-    }
-}
-
-// Check if the ship can be placed without overlapping with other ships
-function canPlaceShip (rotation, size, y ,x) {
-    
-}
-
-// will check if it hit a target
-function checkCell (y, x) {
-    
-}
-
-console.log(ships);
