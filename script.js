@@ -56,25 +56,26 @@ let guessCount = 0;
       }
     },
     userList: function () {
-      document.getElementById("remove").remove();
-      const ul = root.appendChild(document.createElement("ul"));
-        ul.id = remove;
-
-      for (let y = 0; y < this.ships.spawnedShips.length; y++) {
-        const li = ul.appendChild(document.createElement("li"));
-        const text = "";
-        if (this.ships.spawnedShips[y].sunk)
-          text = document.createTextNode("true");
-          text = document.createTextNode("false");
+      const existingList = document.getElementById("remove");
+      if (existingList)
+        existingList.remove();
+    
+        const ul = root.appendChild(document.createElement("ul"));
+        ul.id = "remove";
       
-        li.appendChild(text)
-
+        for (let y = 0; y < this.ships.spawnedShips.length; y++) {
+          const li = ul.appendChild(document.createElement("li"));
+          const ship = this.ships.spawnedShips[y];
+      
+          let text = document.createTextNode(`Ship Length: ${ship.location.length}, Status: ${ship.sunk ? "Sunk" : "Not Sunk"}`);
+          li.appendChild(text);
+        }
       }
     }
-  }
   // Function to handle firing
   function fire (y, x) {
     guessCount++;
+    document.getElementById("guessCount").textContent = `Guess Count: ${guessCount}`;
     const hitShip = battleShip.ships.spawnedShips.find(ship => ship.location.some(coord => coord === `[${y}-${x}]`));
     const td = document.getElementById(`${y}${x}`);
 
@@ -84,10 +85,10 @@ let guessCount = 0;
 
       if (hitShip.hits.every(hit => hit === 'X')) {
         hitShip.sunk = true;
-        alert(`Ship sunk!`);
       }
     } else
       td.style.backgroundColor = 'gray';
+    battleShip.userList();
   }
 
   // Generate the game table
